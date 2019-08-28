@@ -1,15 +1,13 @@
 ############################################################################
 #  QUEST Makefile    
-#    Date:   08/03/2014
-#  Author:   Chia-Chen Chang
 ############################################################################
 QUEST_DIR = $(shell pwd)
 
 # 1) gnu, 2) intel
-COMPILER  = gnu
+COMPILER  = intel
 
-# 1) default, 2) mkl_seq, 3) mkl_par
-LAPACK    = default
+# 1) default, 2) mkl_seq, 3) mkl_par 4) intel
+LAPACK    = intel
 
 # intel MKL library path
 MKLPATH   = $(MKLROOT)/lib/intel64
@@ -24,7 +22,7 @@ CUDAPATH  =
 FLAG_CKB  = #-DDQMC_CKB
 
 # GPU version equal-time Green's function kernel
-FLAG_ASQRD = -DDQMC_ASQRD
+#FLAG_ASQRD = -DDQMC_ASQRD
 
 # GPU version time-dependent Green's function kernel
 FLAG_BSOFI = #-DDQMC_BSOFI
@@ -54,7 +52,7 @@ endif
 ifeq ($(COMPILER), intel)
   FC        = ifort
   CXX       = icpc
-  FC_FLAGS  = -openmp -m64 -warn all -O3 -unroll
+  FC_FLAGS  = -m64 -warn all -O3 -unroll
   #FC_FLAGS = -m64 -g -traceback -check all -O0 -ftrapuv -debug all
   #CXX_FLAGS = -m64 -g -traceback -O0 -check-uninit -ftrapuv -debug all
   CXX_FLAGS = -m64 -Wall -O3 -unroll $(CUDAINC) $(MAGMAINC)
@@ -62,7 +60,7 @@ endif
 ifeq ($(COMPILER), gnu)
   FC        = gfortran
   CXX       = g++
-  FC_FLAGS  = -fopenmp -m64 -Wall -O3 -funroll-loops
+  FC_FLAGS  = -std=legacy -fopenmp -m64 -Wall -O3 -funroll-loops
   CXX_FLAGS = -m64 -Wall -O3 -funroll-loops $(CUDAINC) $(MAGMAINC)
 endif
 
@@ -99,7 +97,8 @@ endif
 
 ifeq ($(LAPACK), mkl_seq)
   ifdef MKLPATH
-    LAPACKLIB = -L$(MKLPATH) -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
+    #LAPACKLIB = -L$(MKLPATH) -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
+    LAPACKLIB = -L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
   else
     $(error "MKLPATH" is not defined in the Makefile.)
   endif
@@ -111,6 +110,10 @@ ifeq ($(LAPACK), mkl_par)
   else
     $(error "MKLPATH" is not defined in the Makefile.)
   endif
+endif
+
+ifeq ($(LAPACK), intel)
+  LAPACKLIB = -mkl=sequential -static-intel
 endif
 
 
